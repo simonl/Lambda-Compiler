@@ -1,5 +1,92 @@
 A toy compiler for the untyped lambda calculus
 
 To do:
-	- Add project
-	- Make it better
+	- Test the generated assembly!!!
+	- Carry types through
+	- Do tail calls properly
+	- Separate into files
+	- Merge AST data types
+
+Examples:
+
+the Y combinator:
+	
+	\f. (\x.x x) (\y.f (y y))
+
+I first add explicit thunks:
+
+	\f. (\x. x () x) (\() y. f () (\(). (y () y)))
+
+The continuation passing transform then sequentializes the operations:
+
+	(){
+		return: (f){
+			x = (){
+				return: (y){
+					forced_f = f()
+					thunk = (){
+						forced_y = y()
+						return: forced_y(y)
+					}
+					return: forced_f(thunk)
+				}
+			}
+			forced_x = x()
+			return: forced_x(x)
+		}
+	}
+
+and then it is closure converted, with global labels.
+Also, tuples are initialized in many steps through mutation,
+here's just a smal portion:
+
+	x_code: (env, y) {
+		f = env[1]
+		code = f[0]
+		forced_f = code(f)
+		thunk = 2[]
+		thunk[0] := thunk_code
+		thunk[1] := y
+		code = forced_f[0]
+		return: code(forced_f, thunk)
+	}
+
+and the corresponding assembly:
+
+	x_code:
+	subl $8, %esp
+	movl %eax, 0(%esp)
+	movl %ebx, 4(%esp)
+	movl 0(%esp), %eax
+	movl 4(%eax), %eax
+	subl $4, %esp
+	movl %eax, 0(%esp)
+	movl 0(%esp), %eax
+	movl 0(%eax), %eax
+	subl $4, %esp
+	movl %eax, 0(%esp)
+	movl 4(%esp), %eax
+	movl 0(%esp), %edi
+	call *%edi
+	subl $4, %esp
+	movl %eax, 0(%esp)
+	movl $2, %eax
+	call __malloc__
+	subl $4, %esp
+	movl %eax, 0(%esp)
+	movl 0(%esp), %eax
+	movl $thunk_code, %ebx
+	movl %ebx, 0(%eax)
+	movl 0(%esp), %eax
+	movl 20(%esp), %ebx
+	movl %ebx, 4(%eax)
+	movl 4(%esp), %eax
+	movl 0(%eax), %eax
+	subl $4, %esp
+	movl %eax, 0(%esp)
+	movl 8(%esp), %eax
+	movl 4(%esp), %ebx
+	movl 0(%esp), %edi
+	call *%edi
+	addl $28, %esp
+	ret

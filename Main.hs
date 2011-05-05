@@ -988,7 +988,7 @@ queens n = place [] {0 .. n} {}
 
 toMulti s = evalParser lex s >>= evalParser parse
 notquite s = toMulti s >>= \exp -> evalStateT (steps exp) (Ident 0)
-steps exp = first exp >>= second -- >>= andquart >>= andhalf >>= third >>= fourth >>= fifth >>= sixth
+steps exp = first exp >>= second >>= andquart >>= andhalf >>= third >>= fourth >>= fifth >>= sixth
 	where	first exp = return exp >>= return . curried >>= uniques >>= return . etaReduce . thunkify
 		second exp = contify exp >>= normalize . inlineCont >>= return . linear . usage . inlineAlias
 		andquart exp = return exp >>= return . restrict . free >>= lifted

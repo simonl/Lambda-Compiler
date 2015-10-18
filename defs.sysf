@@ -1,0 +1,9 @@
+ type bool = True {} | False {}
+ 
+ let true = True {} : bool
+ let false = False {} : bool
+ 
+ let not = \b:bool. case b of { True u. false; False u. true }
+ 
+ 
+ 

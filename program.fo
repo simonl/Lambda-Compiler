@@ -1,0 +1,41 @@
+let	type nat : * = fix n. Zero | Succ { Pred : n };
+	type list : * -> * = \a. fix r. Nil | Cons { Head : a, Tail : r };
+	type bool : * = False | True;
+	type stream : * -> * = \a. fix r. { Head : a, Tail : r };
+	
+	zero : nat = roll Zero;
+	succ : nat -> nat = 
+	  \n. roll (Succ { Pred : n });
+
+	nil : forall a. list a =
+	  /\a. roll Nil;
+	cons : forall a. a -> list a -> list a =
+	  /\a. \x. \xs. roll (Cons { Head : x, Tail : xs });
+	  
+	fold : forall a. list a -> (forall b. (a -> b -> b) -> b -> b) =
+	  /\a. \xs. /\b. \cs. \nl. let
+	    fix rec : list a -> b -> b =
+	      \xs. \v. case (unroll xs) of {
+	        Nil. v;
+	        Cons cell. rec cell.Tail (cs cell.Head v)    
+	      }
+	    in rec xs nl;
+	    
+	length : forall a. list a -> nat =
+	  /\a. \xs. fold [a] xs [nat] (\x:a. succ) zero;
+	  
+	repeat : forall a. a -> stream a =
+	  /\a. \x. fix s. roll { Head : x, Tail : s };
+	
+	iterate : forall a. (a -> a) -> a -> stream a =
+	  /\a. \sc. \z. let
+	    fix rec : a -> stream a =
+	      \v. roll { Head : v, Tail : rec (sc v) } 
+	    in rec z
+
+in
+
+  iterate [nat] succ zero
+   
+ 
+ 

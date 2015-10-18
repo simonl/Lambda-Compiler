@@ -1,0 +1,92 @@
+
+private static interface Type {
+	public void serialize(final DataOutputStream out) throws IOException;
+}
+
+private static final class TVariable implements Type {
+
+	private final String name;
+
+	public TVariable(final String name) {
+		this.name = name;
+	}
+
+	public void serialize(final DataOutputStream out) throws IOException {
+		out.writeByte(0);
+		out.writeUTF(name);
+	}
+
+	public String toString() {
+		return name;
+	}
+}
+
+private static final class Func implements Type {
+
+	private final Type left;
+	private final Type right;
+
+	public Func(final Type left, final Type right) {
+		this.left = left;
+		this.right = right;
+	}
+
+	public void serialize(final DataOutputStream out) throws IOException {
+		out.writeByte(1);
+		left.serialize(out);
+		right.serialize(out);
+	}
+
+	public String toString() {
+		return "(" + left.toString() + " -> " + right.toString() + ")";
+	}
+}
+
+private static final class Forall implements Type {
+
+	private final String name;
+	private final Type body;
+
+	public Forall(final String name, final Type body) {
+		this.name = name;
+		this.body = body;
+	}
+
+	public void serialize(final DataOutputStream out) throws IOException {
+		out.writeByte(2);
+		out.writeUTF(name);
+		body.serialize(out);
+	}
+
+	public String toString() {
+		return "(forall " + name + ". " + body + ")";
+	}
+}
+
+
+private static final Type readType(final DataInputStream in) throws IOException {
+
+	switch(in.readByte()) {
+		case 0 : {
+			final String name = in.readUTF();
+			return new TVariable(name);
+		}
+		case 1 : {
+			final Type left = readType(in);
+			final Type right = readType(in);
+
+			return new Func(left, right);
+		}
+		case 2 : {
+			final String name = in.readUTF();
+			final Type body = readType(in);
+			return new Forall(name, body);
+		}
+		default :
+			throw new IllegalArgumentException("Invalid serialized data!");
+	}
+}
+
+
+
+

@@ -15,6 +15,7 @@ parser = StateT
 runParser = runStateT
 evalParser = evalStateT
  
+abort = mzero
 
 item :: ParserT a a
 item = parser $ \s -> case s of
@@ -55,6 +56,12 @@ digit = sat isDigit
 number :: Parser Int
 number = read <$> some digit
 
+string = single '"' *> many (sat (/= '"')) <* single '"'
+
+lexical :: Parser a -> Parser b -> Parser [a]
+lexical token white = white *> interleave token white <* white <* end
+
+
 
 space = sat isSpace
 whiteSpace = many space
@@ -92,6 +99,7 @@ filter' p ma = do
 	guard (p a)
 	return a
 
+{--
 instance (Monad m) => Applicative (StateT s m) where
 	pure = return
 	(<*>) = ap
@@ -99,4 +107,4 @@ instance (Monad m) => Applicative (StateT s m) where
 instance (MonadPlus m) => Alternative (StateT s m) where
 	empty = mzero
 	(<|>) = mplus
-	
+--}

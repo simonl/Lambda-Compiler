@@ -21,10 +21,6 @@ instance Show Lexeme where
 	show LexCParen = ")"
 	show LexDot = "."
 
-lexical :: Parser a -> Parser b -> Parser [a]
-lexical token white = white *> interleave token white <* white <* end
-
-
 lex :: Parser [Lexeme]
 lex = lexical lexeme whiteSpace
 	where	lexeme	 =  (LexVar <$> word)
